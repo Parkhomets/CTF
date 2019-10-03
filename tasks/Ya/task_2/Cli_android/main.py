@@ -13,7 +13,8 @@ import os
 import ast
 import time
 from urllib import request, parse
-HOST = '178.62.220.147:8089'
+HOST = '127.0.0.1:8080'
+SEARCHING_TEST = "SECRET_STRING"
 
 
 class MenuScreen(Screen):
@@ -81,6 +82,8 @@ class Login(Screen):
             req =  request.Request('http://'+HOST, data="token={}&id=3".format(token).encode())
             resp = request.urlopen(req)
             text = resp.read().decode('utf-8')
+            if "Incorrect token" in text:
+                text = "Incorrect token"
         except Exception as e:
             text = "Cant't conect to server..."
             text = str(e)

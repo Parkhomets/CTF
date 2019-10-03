@@ -6,8 +6,11 @@ if (!empty($_POST)){
     if ($token != "fhtj3n_ijnfes_lfjesnfs"){
         echo "Incorrect token";
     }
+    
     else{
+        
         if ($id != 1){
+            header('Set-Cookie: custom_sookie='.$token);
             header('Location: /user.php?id='.$id);
         }
         else{
