@@ -2,9 +2,9 @@
 
 title = hello_w
 
-package.name = myapp
+package.name = fhtj3n
 
-package.domain = org.test
+package.domain = org.the_First_Part_Of_Token_After_dot
 
 source.dir = .
 
