@@ -1,6 +1,6 @@
 [app]
 
-title = hello_w
+title = client
 
 package.name = fhtj3n
 
@@ -8,7 +8,7 @@ package.domain = org.the_First_Part_Of_Token_After_dot
 
 source.dir = .
 
-source.include_exts = py
+source.include_exts = py,png
 
 version = 0.1
 
