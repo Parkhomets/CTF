@@ -8,13 +8,16 @@ from kivy.core.window import Window
 from kivy.config import ConfigParser
 from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
+from kivy.uix.image import Image 
+from kivy.uix.widget import Widget
 from kivy.metrics import dp
 import os
 import ast
 import time
 from urllib import request, parse
-HOST = '127.0.0.1:8080'
-SEARCHING_TEST = "SECRET_STRING"
+import random
+import sqlite3
+HOST = '127.0.0.1:8080' #must be set before release
 
 
 class MenuScreen(Screen):
@@ -26,7 +29,24 @@ class MenuScreen(Screen):
         box.add_widget(Button(text='Login',
                               on_press=lambda x: set_screen('login')))
         self.add_widget(box)
-        
+
+        try:
+            conn = sqlite3.connect("mydatabase.db") # или :memory: чтобы сохранить в RAM
+            cursor = conn.cursor()
+            cursor.execute("""CREATE TABLE tokens (id int, token text, token_descr text)""")
+
+            cursor.execute("""INSERT INTO tokens
+                            VALUES (1, 'hehe. Not here', 'some_description')"""
+                        )
+
+            cursor.execute("""INSERT INTO tokens
+                            VALUES (2, '_ijnfes_', 'it is a legal token (the 2d part)')"""
+                        )
+
+            conn.commit()
+        except:
+            pass
+
 
 
 class History(Screen):
@@ -49,15 +69,21 @@ class History(Screen):
         dic_foods = ast.literal_eval(
             App.get_running_app().config.get('General', 'user_data'))
 
+        i = 0
+        rand = random.randint(10,20)
         for f, d in sorted(dic_foods.items(), key=lambda x: x[1]):
+            i += 1
             fd = f.decode('u8')
             btn = Button(text=fd, size_hint_y=None, height=dp(40))
-            self.layout.add_widget(btn)
-
+            if i == rand:
+                btn = Button(text='Try catch token!',
+                             on_press=lambda x: set_screen('get_token'),
+                             size_hint_y=None, height=dp(40))
+                self.layout.add_widget(btn)
+            else:
+                self.layout.add_widget(btn)
     def on_leave(self):  # Будет вызвана в момент закрытия экрана
-
         self.layout.clear_widgets()  # очищаем список
-
 
 
 
@@ -86,7 +112,7 @@ class Login(Screen):
                 text = "Incorrect token"
         except Exception as e:
             text = "Cant't conect to server..."
-            text = str(e)
+            #text = str(e)
         
         self.result.text = text
         self.txt1.text = ''
@@ -109,14 +135,75 @@ class Login(Screen):
         self.add_widget(box)
 
 
+
+class Get_Token(Screen):
+
+    def buttonClicked(self, btn1):
+        if not self.txt1.text:
+            return
+        self.app = App.get_running_app()
+        self.app.user_data = ast.literal_eval(
+            self.app.config.get('General', 'user_data'))
+        self.app.user_data[self.txt1.text.encode('u8')] = int(time.time())
+
+        self.app.config.set('General', 'user_data', self.app.user_data)
+        self.app.config.write()
+
+        #ниже у меня будет обращение к серверу и проверка результата
+
+        #тут будет обращение к базе
+        conn = sqlite3.connect("mydatabase.db")
+        cursor = conn.cursor()
+        query = self.txt1.text
+
+        try:
+            query = "SELECT * FROM tokens WHERE token='" + query + "'"
+            #print(query)
+            cursor.execute(query)
+            a = cursor.fetchall()
+            if "_ijnfes_" in str(a):
+                a = 'You found it!! 2d part of token -> _ijnfes_'
+            
+        except Exception as e:
+            #a = str(e)
+            a = "Ooops:( no data..."
+
+        #print(a)       
+
+        self.txt1.text = str(a)
+        ##
+
+    def __init__(self, **kw):
+        super(Get_Token, self).__init__(**kw)
+        box = BoxLayout(orientation='vertical')
+        back_button = Button(text='< Back to main menu', on_press=lambda x:
+                             set_screen('menu'), size_hint_y=None, height=dp(40))
+        box.add_widget(back_button)
+        self.txt1 = TextInput(text='', multiline=False, height=dp(40),
+                              size_hint_y=None, hint_text="where token_descr=<your input>")
+        box.add_widget(self.txt1)
+        btn1 = Button(text="Try catch token!", size_hint_y=None, height=dp(40))
+        btn1.bind(on_press=self.buttonClicked)
+        box.add_widget(btn1)
+        self.result = Label(text='')
+        box.add_widget(self.result)
+        self.add_widget(box)
+
+
+
 def set_screen(name_screen):
     sm.current = name_screen
+
 
 
 sm = ScreenManager()
 sm.add_widget(MenuScreen(name='menu'))
 sm.add_widget(History(name='history'))
 sm.add_widget(Login(name='login'))
+sm.add_widget(Get_Token(name='get_token'))
+
+
+
 
 
 
